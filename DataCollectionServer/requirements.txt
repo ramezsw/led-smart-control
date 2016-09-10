@@ -1,0 +1,7 @@
+pymongo 2.7 or above.
+flask 0.10.1
+plotly API
+JSON
+
+
+
