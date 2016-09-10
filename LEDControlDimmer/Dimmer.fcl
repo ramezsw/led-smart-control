@@ -1,0 +1,85 @@
+FUNCTION_BLOCK Dimmer
+
+VAR_INPUT
+  AmbientLight: REAL;
+  Occupancy: REAL;
+  TargetLux: REAL;
+END_VAR
+
+VAR_OUTPUT
+  LEDOutput: REAL;
+  Current: REAL;
+END_VAR
+
+FUZZIFY AmbientLight
+  TERM Dark := TRAPE 0.00 0.00 80.00 150.00;
+  TERM Dim := TRIAN 80.00 200 350.00;
+  TERM Normal := TRIAN 200.0 350.00 800.00;
+  TERM Bright := TRIAN 350.00 800 1300.00;
+  TERM VeryBright := TRAPE 800 1450.00 3000.00 3000.00;
+END_FUZZIFY
+
+//FUZZIFY TargetLux
+	//TERM Low := TRIAN 0.00 0.00 250.0;
+	//TERM MEDIUM := TRIAN 250.0 400.0 650.0;
+//	TERM HIGH := TRIAN 500.0 700.0 900.0;
+//END_FUZZIFY
+
+FUZZIFY Occupancy
+  TERM False := 0.000;
+  TERM True := 1.000;
+END_FUZZIFY
+
+DEFUZZIFY LEDOutput
+  TERM VeryDim := TRIAN 0.00 0.00 51.000;
+  TERM Dim := TRIAN 25.000 60.000 110.000;
+  TERM Medium := TRIAN 60.000 110.000 190.000;
+  TERM Bright := TRIAN 110.000 190 233.000;
+  TERM VeryBright := TRAPE 190.000 233.000 295.000 295.000;
+  METHOD : COG;
+  DEFAULT := 0;
+END_DEFUZZIFY
+
+DEFUZZIFY Current
+  TERM VLow := TRIAN 0.00 0.00 200.000;
+  TERM Low := TRAPE 98.000 200.000 235.000 431.000;
+  TERM Medium := TRAPE 235.000 431.000 510.000 745.000;
+  TERM High := TRAPE 510.000 706.000 785.000 915.000;
+  TERM VHigh := TRAPE 785.000 915.000 1000.000 1000.000;
+  METHOD : COG;
+  DEFAULT := 0;
+END_DEFUZZIFY
+
+RULEBLOCK rules
+  AND  : MIN; //use 'MIN' for AND, use MAX for OR to fulfill demorgan's law.
+  OR   : MAX;
+  ACT  : MIN; //MIN activation method
+  ACCU : MAX; //MAX accumulation method
+  
+  RULE 1 : IF AmbientLight IS Dark AND Occupancy IS True THEN LEDOutput IS VeryBright;
+  RULE 2 : IF AmbientLight IS Dim AND Occupancy IS True THEN LEDOutput IS Bright;
+  RULE 3 : IF AmbientLight IS Normal AND Occupancy IS True THEN LEDOutput IS Medium;
+  RULE 4 : IF AmbientLight IS Bright AND Occupancy IS True THEN LEDOutput IS Dim;
+  RULE 5 : IF AmbientLight IS VeryBright AND Occupancy IS True THEN LEDOutput IS VeryDim;
+  
+  //RULE 6 : IF AmbientLight IS Normal AND Occupancy IS True AND TargetLux IS Low THEN LEDOutput IS Medium;
+  //RULE 7 : IF AmbientLight IS Normal AND Occupancy IS True AND TargetLux IS MEDIUM THEN LEDOutput IS Bright;
+ // RULE 8 : IF AmbientLight IS Normal AND Occupancy IS True AND TargetLux IS HIGH THEN LEDOutput IS VeryBright;
+  
+ // RULE 9 : IF AmbientLight IS Bright AND Occupancy IS True AND TargetLux IS Low THEN LEDOutput IS Dim;
+ // RULE 10 : IF AmbientLight IS Bright AND Occupancy IS True AND TargetLux IS MEDIUM THEN LEDOutput IS Medium;
+ // RULE 11: IF AmbientLight IS Bright AND Occupancy IS True AND TargetLux IS HIGH THEN LEDOutput IS Bright;
+  
+  
+  
+  
+  
+  RULE 6 : IF AmbientLight IS Dark OR AmbientLight IS Dim OR AmbientLight IS Bright OR AmbientLight IS Normal OR AmbientLight IS VeryBright AND Occupancy IS False THEN LEDOutput IS VeryDim;
+  //RULE 7 : IF AmbientLight IS Dim AND Occupancy IS False THEN LEDOutput IS VeryDim;
+  //RULE 8 : IF AmbientLight IS Bright AND Occupancy IS False THEN LEDOutput IS VeryDim;
+  //RULE 9 : IF AmbientLight IS Normal AND Occupancy IS False THEN LEDOutput IS VeryDim;
+  //RULE 10 : IF AmbientLight IS VeryBright AND Occupancy IS False THEN LEDOutput IS VeryDim;
+  
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
